@@ -13,3 +13,17 @@ jobs:
       - run: npm --prefix functions run build
       - run: npm test
       - run: npx firebase emulators:exec --only firestore "npm run test:rules"
+
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - working-directory: flutter_app
+        run: flutter pub get
+      - working-directory: flutter_app
+        run: flutter analyze
+      - working-directory: flutter_app
+        run: flutter test
