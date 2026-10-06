@@ -1,0 +1,15 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 20, cache: npm}
+      - run: npm install
+      - run: npm --prefix functions install
+      - run: npm run build
+      - run: npm --prefix functions run build
+      - run: npm test
+      - run: npx firebase emulators:exec --only firestore "npm run test:rules"
