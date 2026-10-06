@@ -1,0 +1,13 @@
+import'dart:math' as math;
+class SolverResult{final Map<String,num>metrics;final List<Map<String,dynamic>>series;const SolverResult(this.metrics,[this.series=const[]]);}
+class ScienceSolvers{
+static SolverResult mechanics({required double u,required double a,required double t})=>SolverResult({'finalVelocity':u+a*t,'displacement':u*t+.5*a*t*t},[{'name':'Displacement','points':List.generate(41,(i){final x=t*i/40;return{'x':x,'y':u*x+.5*a*x*x};})}]);
+static SolverResult projectile({required double speed,required double angleDeg,double gravity=9.80665}){final a=angleDeg*math.pi/180,t=2*speed*math.sin(a)/gravity,range=speed*math.cos(a)*t,h=math.pow(speed*math.sin(a),2)/(2*gravity);return SolverResult({'flightTime':t,'range':range,'maxHeight':h},[{'name':'Trajectory','points':List.generate(51,(i){final x=t*i/50;return{'x':speed*math.cos(a)*x,'y':speed*math.sin(a)*x-.5*gravity*x*x};})}]);}
+static SolverResult dilution(double c1,double v1,double v2)=>SolverResult({'finalConcentration':c1*v1/v2});
+static SolverResult decay(double initial,double halfLife,double duration){final f=initial*math.pow(.5,duration/halfLife);return SolverResult({'remaining':f,'fractionRemaining':f/initial},[{'name':'Decay','points':List.generate(51,(i){final x=duration*i/50;return{'x':x,'y':initial*math.pow(.5,x/halfLife)};})}]);}
+static SolverResult capacitor(double voltage,double resistance,double capacitance,double duration){final tau=resistance*capacitance;return SolverResult({'timeConstant':tau,'finalVoltage':voltage*(1-math.exp(-duration/tau))},[{'name':'Capacitor voltage','points':List.generate(51,(i){final x=duration*i/50;return{'x':x,'y':voltage*(1-math.exp(-x/tau))};})}]);}
+static SolverResult wave(double amplitude,double frequency,double wavelength)=>SolverResult({'period':frequency==0?double.infinity:1/frequency,'waveSpeed':frequency*wavelength},[{'name':'Wave','points':List.generate(101,(i){final x=2*wavelength*i/100;return{'x':x,'y':amplitude*math.sin(2*math.pi*x/wavelength)};})}]);
+static SolverResult idealGas(double n,double temperatureK,double volumeM3)=>SolverResult({'pressurePa':n*8.314462618*temperatureK/volumeM3});
+static SolverResult seismic(double distance,double vp,double vs)=>SolverResult({'pArrivalS':distance/vp,'sArrivalS':distance/vs,'spIntervalS':distance/vs-distance/vp});
+static SolverResult plate(double lat,double lon,double eastMmYr,double northMmYr,double years){final north=northMmYr*years/1000,east=eastMmYr*years/1000,dLat=north/111320,dLon=east/(111320*math.cos(lat*math.pi/180));return SolverResult({'finalLat':lat+dLat,'finalLon':lon+dLon,'displacementM':math.sqrt(north*north+east*east)});}
+}
