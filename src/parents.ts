@@ -1,0 +1,1 @@
+import{collection,getDocs,query,where}from"firebase/firestore";import{db}from"./firebase";export async function linkedLearners(parentId:string){const q=query(collection(db,"parentLinks"),where("parentId","==",parentId),where("status","==","active"));return(await getDocs(q)).docs.map(d=>d.data().learnerId as string)}
