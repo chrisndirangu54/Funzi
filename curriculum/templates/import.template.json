@@ -1,0 +1,34 @@
+{
+  "metadata": {
+    "sourceId": "kicd-authorized-source-id",
+    "sourceSha256": "REPLACE_AFTER_ACQUISITION",
+    "retrievedAt": "YYYY-MM-DDTHH:mm:ss.sssZ",
+    "reviewStatus": "pending",
+    "reviewer": null
+  },
+  "nodes": [
+    {
+      "id": "stable-id",
+      "framework": "CBE",
+      "frameworkVersion": "source-version",
+      "level": "Junior School",
+      "grade": 8,
+      "subject": "SUBJECT",
+      "type": "strand",
+      "name": "AUTHORIZED_SOURCE_TEXT_OR_APPROVED_NORMALIZATION",
+      "specificLearningOutcomes": [],
+      "coreCompetencies": [],
+      "values": [],
+      "pertinentIssues": [],
+      "suggestedExperiences": [],
+      "assessmentRubric": [],
+      "source": {
+        "title": "OFFICIAL SOURCE TITLE",
+        "publisher": "Kenya Institute of Curriculum Development",
+        "url": "OFFICIAL SOURCE URL",
+        "documentVersion": "SOURCE VERSION"
+      }
+    }
+  ],
+  "edges": []
+}
