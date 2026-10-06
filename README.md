@@ -71,3 +71,36 @@ Funzi should use least-privilege Firestore rules, explicit parent/teacher relati
 ## Status
 
 This repository now contains the first executable product foundation. The UI uses demonstration learner data until Firebase collections and server-side AI functions are configured.
+
+
+## Operational setup
+
+The modules now have executable implementations, but a new deployment still requires project credentials and cloud resources owned by the deployer.
+
+1. Create/select a Firebase project and enable **Email/Password** and **Google** Authentication.
+2. Create Firestore and add the Firebase web configuration to `.env` using `.env.example`.
+3. Install the Firebase CLI and authenticate, then associate this repo with the project (`firebase use --add`).
+4. Set the server AI secret: `firebase functions:secrets:set OPENAI_API_KEY`.
+5. Install dependencies at the repository root and under `functions/`.
+6. Build the functions and web app, test with Firebase Emulator Suite, then deploy rules, indexes, functions and hosting.
+7. Promote trusted teacher/school/platform accounts by setting their `users/{uid}.role` from a protected administrative process; never let clients self-promote roles.
+8. Ingest curriculum nodes/edges with an authorized school/platform admin before expecting grounded diagnostics or generated content.
+
+### Implemented operational modules
+
+- Firebase email/password + Google authentication
+- Firestore learner-twin persistence and daily study-plan storage
+- Relationship-restricted parent access and classroom primitives
+- Server-side Socratic AI tutor with persisted conversation history
+- Structured AI quiz and flashcard generation
+- Adaptive diagnostic session state + mastery evidence recording
+- Curriculum graph ingestion with role checks
+- SM-2-inspired spaced repetition scheduling
+- Browser voice recognition and speech synthesis with Kenya locales
+- Dynamic study replanning for missed priorities
+- Improvement/consistency/mastery weighted leaderboard computation
+- Firebase Hosting, Firestore indexes and deny-by-default security rules
+
+### Production note
+
+“Operational” means the code paths are implemented rather than placeholder UI. They cannot contact Firebase/OpenAI until the repository is attached to real Firebase infrastructure and the required environment variables/secrets are configured. Before serving minors at scale, add emulator/security-rule tests, App Check, abuse/rate controls, moderation/escalation operations, consent/retention workflows, and independent privacy/security review.
