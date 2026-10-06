@@ -1,0 +1,1 @@
+import{describe,it,expect}from"vitest";import{parseCsv}from"../src/labInterfaces";describe("external data contracts",()=>{it("parses numeric CSV measurements",()=>expect(parseCsv("x,y\n1,2")[0]).toEqual({x:1,y:2}));it("preserves textual CSV labels",()=>expect(parseCsv("sample,value\nA,3")[0]).toEqual({sample:"A",value:3}))})
