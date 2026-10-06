@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "publisher": "Kenya Institute of Curriculum Development",
+  "publisherUrl": "https://kicd.ac.ke/",
+  "rightsPolicy": "Do not copy/store/transcribe protected KICD curriculum text unless permission/licence permits it. Registry entries are source pointers and provenance metadata.",
+  "sources": [
+    {
+      "id": "kicd-becf-2019",
+      "kind": "framework",
+      "framework": "CBC",
+      "title": "Basic Education Curriculum Framework 2019",
+      "officialPage": "https://kicd.ac.ke/curriculum-reform/basic-education-curriculum-framework/",
+      "status": "authoritative-reference",
+      "ingestText": false
+    },
+    {
+      "id": "kicd-regular-designs",
+      "kind": "catalogue",
+      "framework": "CBC/CBE",
+      "title": "Regular Curriculum Designs",
+      "officialPage": "https://kicd.ac.ke/cbc-materials/curriculum-designs/regular-curriculum-designs/",
+      "status": "authoritative-catalogue",
+      "ingestText": false
+    },
+    {
+      "id": "kicd-grade-7",
+      "kind": "grade-catalogue",
+      "framework": "CBC/CBE",
+      "grade": 7,
+      "title": "Grade Seven Designs",
+      "officialPage": "https://kicd.ac.ke/cbc-materials/curriculum-designs/grade-seven-designs/",
+      "status": "authoritative-catalogue",
+      "ingestText": false
+    },
+    {
+      "id": "kicd-grade-8",
+      "kind": "grade-catalogue",
+      "framework": "CBC/CBE",
+      "grade": 8,
+      "title": "Grade Eight Designs",
+      "officialPage": "https://kicd.ac.ke/cbc-materials/curriculum-designs/grade-eight-designs/",
+      "status": "authoritative-catalogue",
+      "ingestText": false
+    }
+  ]
+}
