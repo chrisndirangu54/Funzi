@@ -14,6 +14,9 @@ dependencies:
   google_sign_in: ^7.1.1
   speech_to_text: ^7.3.0
   flutter_tts: ^4.2.3
+  flutter_blue_plus: ^1.35.5
+  usb_serial: ^0.5.2
+  vector_math: ^2.1.4
 dev_dependencies:
   flutter_test:
     sdk: flutter
