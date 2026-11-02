@@ -6,12 +6,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: {node-version: 20, cache: npm}
-      - run: npm install
+        with: {node-version: 20}
+      - run: npm install --global npm@11
+      - run: npm install --no-audit --no-fund
       - run: npm --prefix functions install
       - run: npm run build
+      - run: npx tsc --noEmit
       - run: npm --prefix functions run build
       - run: npm test
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: "21"}
       - run: npx firebase emulators:exec --only firestore "npm run test:rules"
 
   flutter:
