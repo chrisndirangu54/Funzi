@@ -8,7 +8,7 @@ import {rateLimit} from "./guard.js";
 if(!getApps().length)initializeApp();
 const db=getFirestore();
 const uidOf=(r:any):string=>{if(!r.auth?.uid)throw new HttpsError("unauthenticated","Sign in required");return r.auth.uid};
-const curricula=["kenya-cbe","kenya-844","cambridge","pearson-edexcel","ib","us-common-core","us-ngss","us-ap","china-national","british-national","montessori","waldorf"] as const;
+const curricula=["kenya-cbe","kenya-844","cambridge","pearson-edexcel","ib","us-common-core","us-ngss","us-ap","china-national","british-national","montessori","waldorf","india-cbse","singapore-moe","south-africa-caps","australian-curriculum","canada-ontario","new-zealand","france-national"] as const;
 const planSchema=z.object({
  pathway:z.enum(curricula),
  stage:z.string().trim().min(2).max(80),
@@ -32,7 +32,7 @@ const activitySchema=z.object({
 const learnerId=z.string().regex(/^[A-Za-z0-9_-]{5,128}$/);
 const recordId=z.string().regex(/^[A-Za-z0-9_-]{5,128}$/);
 const format=(s:any)=>({...s.data(),id:s.id,createdAt:s.data()?.createdAt?.toDate?.()?.toISOString?.()||null,reviewedAt:s.data()?.reviewedAt?.toDate?.()?.toISOString?.()||null});
-function schoolworkCompatibleDate(raw:string){const t=Date.parse(raw+"T12:00:00Z");if(!Number.isFinite(t)||new Date(t).toISOString().slice(0,10)!==raw)return false;const now=Date.now();return t<=now+86400000&&t>=now-365*86400000;}
+function schoolworkCompatibleDate(raw:string){const t=Date.parse(raw+"T12:00:00Z");if(!Number.isFinite(t)||new Date(t).toISOString().slice(0,10)!==raw)return false;const now=Date.now();const nairobiDate=new Intl.DateTimeFormat("en-CA",{timeZone:"Africa/Nairobi",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(now));return raw<=nairobiDate&&t>=now-365*86400000;}
 async function linkedParent(parentUid:string,studentUid:string){
  const link=await db.doc("homeschoolGuardianLinks/"+studentUid+"_"+parentUid).get();
  return link.exists&&link.data()?.learnerId===studentUid&&link.data()?.parentId===parentUid;
