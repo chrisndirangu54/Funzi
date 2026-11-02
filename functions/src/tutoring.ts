@@ -6,6 +6,7 @@ import {z} from "zod";
 import OpenAI from "openai";
 import {moderate} from "./safety.js";
 import {rateLimit} from "./guard.js";
+import {canPublishForProvider,containsExternalContact,validProposedTime} from "./tutoring-policy.js";
 
 if(!getApps().length)initializeApp();
 const db=getFirestore();
@@ -72,7 +73,7 @@ export const submitTutoringPackage=onCall({enforceAppCheck:true},async r=>{
  const uid=verified(r);await rateLimit(db,uid,"tutoring-package",10,3600);
  const x=packageSchema.and(z.object({packageId:id.optional()})).parse(r.data);
  const profile=(await db.doc("tutoringProviders/"+uid).get()).data();
- if(profile?.status!=="approved"||(profile.kind==="school"&&profile.workspaceVerified!==true))throw new HttpsError("permission-denied","Approved, verified provider required");
+ if(!canPublishForProvider(profile))throw new HttpsError("permission-denied","Approved, verified provider required");
  const ref=x.packageId?db.doc("tutoringPackages/"+x.packageId):db.collection("tutoringPackages").doc();
  const prior=await ref.get();if(prior.exists&&prior.data()?.providerUid!==uid)throw new HttpsError("permission-denied","Not your package");
  const {packageId,...fields}=x;
@@ -84,7 +85,7 @@ export const reviewTutoringPackage=onCall({enforceAppCheck:true},async r=>{
  const actor=await admin(r);const x=z.object({packageId:id,decision:z.enum(["published","rejected","unpublished"]),reason:z.string().trim().max(500).default("")}).parse(r.data);
  const ref=db.doc("tutoringPackages/"+x.packageId);const snap=await ref.get();if(!snap.exists)throw new HttpsError("not-found","Package not found");
  const p=(await db.doc("tutoringProviders/"+snap.data()!.providerUid).get()).data();
- if(x.decision==="published"&&(p?.status!=="approved"||(p.kind==="school"&&!p.workspaceVerified)))throw new HttpsError("permission-denied","Provider is not approved");
+ if(x.decision==="published"&&!canPublishForProvider(p))throw new HttpsError("permission-denied","Provider is not approved");
  await ref.update({status:x.decision,moderationReason:x.reason,moderatedBy:actor,moderatedAt:FieldValue.serverTimestamp()});
  await db.collection("tutoringAudit").add({action:"package_review",actor,target:x.packageId,decision:x.decision,at:FieldValue.serverTimestamp()});
  return {status:x.decision};
@@ -94,7 +95,7 @@ export const listTutoringPackages=onCall({enforceAppCheck:true},async r=>{
  // Check current provider approval so suspended providers cannot stay listed.
  const owners=[...new Set(docs.docs.map(s=>String(s.data().providerUid)))];
  const states=new Map(await Promise.all(owners.map(async uid=>[uid,(await db.doc("tutoringProviders/"+uid).get()).data()] as const)));
- return {packages:docs.docs.filter(s=>{const p=states.get(s.data().providerUid);return p?.status==="approved"&&(p.kind!=="school"||p.workspaceVerified===true)}).map(s=>packageView(s.data(),s.id))};
+ return {packages:docs.docs.filter(s=>{const p=states.get(s.data().providerUid);return canPublishForProvider(p)}).map(s=>packageView(s.data(),s.id))};
 });
 export const getMyTutoringDashboard=onCall({enforceAppCheck:true},async r=>{
  const uid=uidOf(r);const [mine,assigned,requested]=await Promise.all([
@@ -113,8 +114,8 @@ export const requestTutoringBooking=onCall({enforceAppCheck:true},async r=>{
  const p=(await db.doc("tutoringPackages/"+x.packageId).get()).data();
  if(!p||p.status!=="published"||p.providerUid===uid)throw new HttpsError("failed-precondition","Package unavailable");
  const provider=(await db.doc("tutoringProviders/"+p.providerUid).get()).data();
- if(provider?.status!=="approved"||(provider.kind==="school"&&!provider.workspaceVerified))throw new HttpsError("failed-precondition","Provider unavailable");
- const timestamp=Date.parse(x.preferredAt);if(timestamp<Date.now()+3600000||timestamp>Date.now()+90*86400000)throw new HttpsError("invalid-argument","Choose a time between one hour and 90 days from now");
+ if(!canPublishForProvider(provider))throw new HttpsError("failed-precondition","Provider unavailable");
+if(!validProposedTime(x.preferredAt))throw new HttpsError("invalid-argument","Choose a time between one hour and 90 days from now");
  const ref=db.collection("tutoringBookings").doc();
  await ref.set({learnerUid:uid,providerUid:p.providerUid,packageId:x.packageId,packageTitle:p.title,topic:x.topic,preferredAt:x.preferredAt,status:"requested",paymentStatus:"not_collected",meetingStatus:"not_provisioned",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
  return {id:ref.id,status:"requested",paymentStatus:"not_collected"};
@@ -131,13 +132,14 @@ export const respondTutoringBooking=onCall({enforceAppCheck:true},async r=>{
  });
  return {status:x.decision};
 });
-const contactPattern=/(https?:\/\/|www\.|[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}|(?:\+?\d[\d\s().-]{7,}\d))/i;
 export const postTutoringMessage=onCall({secrets:[AI_KEY],enforceAppCheck:true},async r=>{
  const uid=verified(r);await rateLimit(db,uid,"tutoring-messages",15,60);
  const x=z.object({bookingId:id,text:z.string().trim().min(1).max(1200)}).parse(r.data);
  const booking=(await db.doc("tutoringBookings/"+x.bookingId).get()).data();
  if(!booking||booking.status!=="accepted"||![booking.learnerUid,booking.providerUid].includes(uid))throw new HttpsError("permission-denied","Accepted booking membership required");
- if(contactPattern.test(x.text))throw new HttpsError("permission-denied","Do not exchange contact details or external links in tutoring messages");
+ const provider=(await db.doc("tutoringProviders/"+booking.providerUid).get()).data();
+ if(!canPublishForProvider(provider))throw new HttpsError("permission-denied","Provider no longer approved");
+ if(containsExternalContact(x.text))throw new HttpsError("permission-denied","Do not exchange contact details or external links in tutoring messages");
  const decision=await moderate(new OpenAI({apiKey:AI_KEY.value()}),db,uid,x.text,"input");
  if(decision.blocked||decision.escalate)throw new HttpsError("permission-denied","Message held for safety review");
  const ref=db.collection("tutoringBookings").doc(x.bookingId).collection("messages").doc();
