@@ -4,6 +4,7 @@ import {onCall,HttpsError} from "firebase-functions/v2/https";
 import {z} from "zod";
 import {createHash,randomBytes,timingSafeEqual} from "node:crypto";
 import {rateLimit} from "./guard.js";
+import {isValidHomeLearningCatalogChoice} from "./homeschoolCatalog.js";
 
 if(!getApps().length)initializeApp();
 const db=getFirestore();
@@ -51,8 +52,8 @@ async function dashboard(studentUid:string){
 export const saveHomeLearningPlan=onCall({enforceAppCheck:true},async r=>{
  const uid=uidOf(r);await rateLimit(db,uid,"home-plan",12,3600);
  const plan=planSchema.parse(r.data);
- // Independently validate curriculum catalog membership/stages in the UI; the server enforces
- // identity, field bounds and recognized pathway IDs, not official curriculum certification.
+ if(!isValidHomeLearningCatalogChoice(plan))throw new HttpsError("invalid-argument","Stage, subjects or teaching language do not match the selected curriculum");
+ // Catalog validation does not imply official curriculum endorsement or certification.
  await db.doc("homeschoolProfiles/"+uid).set({uid,plan,updatedAt:FieldValue.serverTimestamp()},{merge:true});
  return {saved:true,officiallyAccredited:false};
 });
