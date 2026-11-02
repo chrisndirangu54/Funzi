@@ -1,5 +1,5 @@
-import crypto from"node:crypto";import{getFirestore}from"firebase-admin/firestore";import{getStorage}from"firebase-admin/storage";import{FieldValue as CloudFieldValue}from"@google-cloud/firestore";import OpenAI from"openai";import {PDFParse} from"pdf-parse";
-const db=getFirestore();export const EMBEDDING_MODEL=process.env.EMBEDDING_MODEL||"text-embedding-3-small";export const EMBEDDING_DIMENSIONS=1024;
+import crypto from"node:crypto";import {getApps,initializeApp} from"firebase-admin/app";import{getFirestore}from"firebase-admin/firestore";import{getStorage}from"firebase-admin/storage";import{FieldValue as CloudFieldValue}from"@google-cloud/firestore";import OpenAI from"openai";import {PDFParse} from"pdf-parse";
+if(!getApps().length)initializeApp();const db=getFirestore();export const EMBEDDING_MODEL=process.env.EMBEDDING_MODEL||"text-embedding-3-small";export const EMBEDDING_DIMENSIONS=1024;
 export type RagFilter={grade?:number;subject?:string;skillId?:string};
 function clean(s:string){return s.replace(/\u0000/g,"").replace(/[ \t]+/g," ").replace(/\n{3,}/g,"\n\n").trim()}
 export function chunkText(text:string,maxChars=4200,overlap=500){const t=clean(text),out:string[]=[];let i=0;while(i<t.length){let end=Math.min(t.length,i+maxChars);if(end<t.length){const p=Math.max(t.lastIndexOf("\n\n",end),t.lastIndexOf(". ",end));if(p>i+maxChars*.6)end=p+1}const c=t.slice(i,end).trim();if(c)out.push(c);if(end>=t.length)break;i=Math.max(i+1,end-overlap)}return out}
