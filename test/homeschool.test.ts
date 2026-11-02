@@ -1,8 +1,10 @@
+import {homeschoolCatalog,isValidHomeLearningCatalogChoice} from "../functions/src/homeschoolCatalog";
 import {describe,expect,it} from "vitest";
 import {pathways,validatePlan,type LearnerPlan} from "../src/homeschoolCurricula";
 import {studySchedule,curriculumBridge,projectsForSubject,progressMetrics} from "../src/homeschoolIntelligence";
 const plan:LearnerPlan={pathway:"kenya-cbe",stage:"Primary",weeklyHours:12.5,language:"English",kenyaContext:true,subjects:["Mathematics","English","Integrated Science"]};
 describe("Home education curriculum, scheduling and evidence",()=>{
+ it("keeps server and client curriculum metadata synchronized",()=>{for(const p of pathways){expect(homeschoolCatalog[p.id]).toEqual({stages:p.stages,subjects:p.subjects,language:p.language});expect(isValidHomeLearningCatalogChoice({pathway:p.id,stage:p.stages[0],subjects:[p.subjects[0]],language:p.language[0]})).toBe(true)}expect(isValidHomeLearningCatalogChoice({pathway:"kenya-cbe",stage:"Primary",subjects:["Made-up"],language:"English"})).toBe(false)});
  it("lists Kenyan, Chinese, American and international pathways",()=>{
   for(const id of ["kenya-cbe","china-national","us-common-core","us-ngss","us-ap","cambridge","ib","pearson-edexcel","india-cbse","singapore-moe","south-africa-caps","australian-curriculum","canada-ontario","new-zealand","france-national"])expect(pathways.some(p=>p.id===id)).toBe(true);
  });
