@@ -25,6 +25,8 @@
   "devDependencies": {
     "firebase-tools": "latest",
     "vitest": "latest",
-    "@firebase/rules-unit-testing": "latest"
+    "@firebase/rules-unit-testing": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest"
   }
 }
