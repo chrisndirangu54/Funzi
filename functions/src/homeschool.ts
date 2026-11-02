@@ -2,6 +2,7 @@ import {getApps,initializeApp} from "firebase-admin/app";
 import {getFirestore,FieldValue} from "firebase-admin/firestore";
 import {onCall,HttpsError} from "firebase-functions/v2/https";
 import {z} from "zod";
+import {createHash,randomBytes,timingSafeEqual} from "node:crypto";
 import {rateLimit} from "./guard.js";
 
 if(!getApps().length)initializeApp();
@@ -33,7 +34,7 @@ const recordId=z.string().regex(/^[A-Za-z0-9_-]{5,128}$/);
 const format=(s:any)=>({...s.data(),id:s.id,createdAt:s.data()?.createdAt?.toDate?.()?.toISOString?.()||null,reviewedAt:s.data()?.reviewedAt?.toDate?.()?.toISOString?.()||null});
 function schoolworkCompatibleDate(raw:string){const t=Date.parse(raw+"T12:00:00Z");if(!Number.isFinite(t)||new Date(t).toISOString().slice(0,10)!==raw)return false;const now=Date.now();return t<=now+86400000&&t>=now-365*86400000;}
 async function linkedParent(parentUid:string,studentUid:string){
- const link=await db.doc("parentLinks/"+studentUid+"_"+parentUid).get();
+ const link=await db.doc("homeschoolGuardianLinks/"+studentUid+"_"+parentUid).get();
  return link.exists&&link.data()?.learnerId===studentUid&&link.data()?.parentId===parentUid;
 }
 async function dashboard(studentUid:string){
@@ -84,4 +85,63 @@ export const reviewHomeLearningSession=onCall({enforceAppCheck:true},async r=>{
   tx.update(ref,{reviewStatus:x.decision,reviewNote:x.note,reviewedBy:actor,reviewedAt:FieldValue.serverTimestamp()});
  });
  return {status:x.decision,officialGrade:false};
+});
+
+/**
+ * Two-account, short-lived proof-of-control handshake for homeschooling guardians.
+ * This establishes an account link ONLY, never verifies adult age or legal guardianship.
+ */
+const hashCode=(token:string)=>createHash("sha256").update(token).digest("hex");
+export const createHomeGuardianInvite=onCall({enforceAppCheck:true},async r=>{
+ const guardianUid=uidOf(r);
+ if(r.auth.token.email_verified!==true)throw new HttpsError("permission-denied","Guardian must verify email");
+ z.object({adultAttestation:z.literal(true)}).parse(r.data);
+ await rateLimit(db,guardianUid,"home-guardian-invite",6,3600);
+ const ref=db.collection("homeschoolGuardianInvites").doc();
+ const token=randomBytes(24).toString("hex");
+ const expiresAt=Date.now()+15*60*1000;
+ await ref.create({guardianUid,tokenHash:hashCode(token),expiresAt,createdAt:FieldValue.serverTimestamp(),used:false});
+ return {inviteCode:ref.id+"."+token,expiresAt:new Date(expiresAt).toISOString(),
+   warning:"Account link only. Age, identity and legal guardianship are not verified."};
+});
+export const acceptHomeGuardianInvite=onCall({enforceAppCheck:true},async r=>{
+ const learnerUid=uidOf(r);
+ const code=z.object({inviteCode:z.string().trim().regex(/^[A-Za-z0-9_-]{10,128}\.[a-f0-9]{48}$/)}).parse(r.data).inviteCode;
+ await rateLimit(db,learnerUid,"home-guardian-accept",8,3600);
+ const [inviteId,secret]=code.split(".");
+ const inviteRef=db.doc("homeschoolGuardianInvites/"+inviteId);
+ const accepted=await db.runTransaction(async tx=>{
+  const invite=await tx.get(inviteRef);const entry=invite.data();
+  if(!entry||entry.used||Number(entry.expiresAt)<Date.now())throw new HttpsError("failed-precondition","Invitation expired or already used");
+  const expected=Buffer.from(String(entry.tokenHash),"hex");
+  const actual=Buffer.from(hashCode(secret),"hex");
+  if(expected.length!==actual.length||!timingSafeEqual(expected,actual))throw new HttpsError("permission-denied","Invalid invitation");
+  const guardianUid=String(entry.guardianUid);
+  if(guardianUid===learnerUid)throw new HttpsError("failed-precondition","Separate learner and guardian accounts required");
+  const linkRef=db.doc("homeschoolGuardianLinks/"+learnerUid+"_"+guardianUid);
+  tx.set(linkRef,{learnerId:learnerUid,parentId:guardianUid,status:"linked_unverified",createdAt:FieldValue.serverTimestamp()},{merge:true});
+  tx.update(inviteRef,{used:true,usedAt:FieldValue.serverTimestamp(),usedBy:learnerUid});
+  return guardianUid;
+ });
+ return {linked:true,guardianUid:accepted,legalGuardianVerified:false};
+});
+export const listMyHomeGuardianLinks=onCall({enforceAppCheck:true},async r=>{
+ const uid=uidOf(r);
+ const [learning,guarding]=await Promise.all([
+  db.collection("homeschoolGuardianLinks").where("learnerId","==",uid).limit(30).get(),
+  db.collection("homeschoolGuardianLinks").where("parentId","==",uid).limit(30).get(),
+ ]);
+ return {myGuardians:learning.docs.map(d=>({guardianUid:d.data().parentId,status:d.data().status})),
+    myLearners:guarding.docs.map(d=>({learnerUid:d.data().learnerId,status:d.data().status}))};
+});
+export const revokeHomeGuardianLink=onCall({enforceAppCheck:true},async r=>{
+ const actor=uidOf(r);
+ const x=z.object({learnerUid:learnerId,guardianUid:learnerId}).parse(r.data);
+ if(actor!==x.learnerUid&&actor!==x.guardianUid)throw new HttpsError("permission-denied","Not a participant");
+ await rateLimit(db,actor,"home-guardian-revoke",20,3600);
+ const ref=db.doc("homeschoolGuardianLinks/"+x.learnerUid+"_"+x.guardianUid);
+ const snap=await ref.get();
+ if(!snap.exists||snap.data()?.learnerId!==x.learnerUid||snap.data()?.parentId!==x.guardianUid)throw new HttpsError("not-found","Link not found");
+ await ref.delete();
+ return {revoked:true};
 });
