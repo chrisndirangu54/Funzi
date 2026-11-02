@@ -28,3 +28,5 @@ describe("Homeschooling privacy",()=>{
   await assertFails(setDoc(doc(parent,"homeschoolProfiles/learner/sessions/session1"),{reviewStatus:"guardian_acknowledged"}));
  });
 });
+
+describe("Homeschool guardian invitation safety",()=>{it("prevents direct access to invitations or forged family links",async()=>{const learner=env.authenticatedContext("learner").firestore();const parent=env.authenticatedContext("parent").firestore();for(const path of ["homeschoolGuardianInvites/invite1","homeschoolGuardianLinks/learner_parent"]){await assertFails(getDoc(doc(learner,path)));await assertFails(setDoc(doc(learner,path),{guardianUid:"parent",learnerId:"learner"}));await assertFails(getDoc(doc(parent,path)));await assertFails(setDoc(doc(parent,path),{guardianUid:"parent",learnerId:"learner"}));}})});
