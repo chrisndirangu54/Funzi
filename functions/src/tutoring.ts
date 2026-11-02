@@ -1,3 +1,4 @@
+import {getApps,initializeApp} from "firebase-admin/app";
 import {getFirestore,FieldValue} from "firebase-admin/firestore";
 import {onCall,HttpsError} from "firebase-functions/v2/https";
 import {defineSecret} from "firebase-functions/params";
@@ -6,6 +7,7 @@ import OpenAI from "openai";
 import {moderate} from "./safety.js";
 import {rateLimit} from "./guard.js";
 
+if(!getApps().length)initializeApp();
 const db=getFirestore();
 const AI_KEY=defineSecret("OPENAI_API_KEY");
 const uidOf=(r:any):string=>{if(!r.auth?.uid)throw new HttpsError("unauthenticated","Sign in required");return r.auth.uid};
