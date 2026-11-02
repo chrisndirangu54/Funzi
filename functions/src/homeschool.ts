@@ -94,7 +94,7 @@ export const reviewHomeLearningSession=onCall({enforceAppCheck:true},async r=>{
 const hashCode=(token:string)=>createHash("sha256").update(token).digest("hex");
 export const createHomeGuardianInvite=onCall({enforceAppCheck:true},async r=>{
  const guardianUid=uidOf(r);
- if(r.auth.token.email_verified!==true)throw new HttpsError("permission-denied","Guardian must verify email");
+ if(r.auth?.token.email_verified!==true)throw new HttpsError("permission-denied","Guardian must verify email");
  z.object({adultAttestation:z.literal(true)}).parse(r.data);
  await rateLimit(db,guardianUid,"home-guardian-invite",6,3600);
  const ref=db.collection("homeschoolGuardianInvites").doc();
