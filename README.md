@@ -104,3 +104,10 @@ The modules now have executable implementations, but a new deployment still requ
 ### Production note
 
 “Operational” means the code paths are implemented rather than placeholder UI. They cannot contact Firebase/OpenAI until the repository is attached to real Firebase infrastructure and the required environment variables/secrets are configured. Before serving minors at scale, add emulator/security-rule tests, App Check, abuse/rate controls, moderation/escalation operations, consent/retention workflows, and independent privacy/security review.
+
+
+## Moderated tutoring marketplace and schoolwork alignment
+
+The `Tutoring` area supports human-reviewed freelance teachers, school tutoring partners, moderated programme listings, session requests and in-app messages. Guardian/adult eligibility needs independent verification. School learning content can be synchronized for **one explicitly linked learner** from the existing TeknTandao Workspace `funziSchoolFeed`, without importing rosters, marks, attendance, contacts or billing. AI study guidance uses the existing moderated Socratic tutor.
+
+See [Tutoring marketplace and deployment](docs/TUTORING_MARKETPLACE.md) for data scope, service credentials, reviewer operations, consent requirements and launch blockers. **Payments, live video and automatic verification are not yet implemented.**
