@@ -73,7 +73,7 @@ export const submitTutoringPackage=onCall({enforceAppCheck:true},async r=>{
  const uid=verified(r);await rateLimit(db,uid,"tutoring-package",10,3600);
  const x=packageSchema.and(z.object({packageId:id.optional()})).parse(r.data);
  const profile=(await db.doc("tutoringProviders/"+uid).get()).data();
- if(!canPublishForProvider(profile))throw new HttpsError("permission-denied","Approved, verified provider required");
+ if(!profile||!canPublishForProvider(profile))throw new HttpsError("permission-denied","Approved, verified provider required");
  const ref=x.packageId?db.doc("tutoringPackages/"+x.packageId):db.collection("tutoringPackages").doc();
  const prior=await ref.get();if(prior.exists&&prior.data()?.providerUid!==uid)throw new HttpsError("permission-denied","Not your package");
  const {packageId,...fields}=x;
