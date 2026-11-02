@@ -50,3 +50,5 @@ export {applyAsTutor,applyAsSchoolPartner,requestTutoringEligibility,reviewTutor
 export {syncLinkedSchoolwork,getMySchoolwork} from "./schoolwork.js";
 
 export {saveHomeLearningPlan,getMyHomeLearningDashboard,recordHomeLearningSession,getHomeLearningFamilyDashboard,reviewHomeLearningSession} from "./homeschool.js";
+
+export {createHomeGuardianInvite,acceptHomeGuardianInvite,listMyHomeGuardianLinks,revokeHomeGuardianLink} from "./homeschool.js";
