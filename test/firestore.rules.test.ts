@@ -9,3 +9,22 @@ import{afterAll,beforeAll,describe,it}from"vitest";import{initializeTestEnvironm
   await assertFails(setDoc(doc(learner,path),{status:"approved",workspaceVerified:true}));
  }
 })})
+
+describe("Homeschooling privacy",()=>{
+ it("denies direct profile and activity reads, including linked parent clients",async()=>{
+  const learner=env.authenticatedContext("learner").firestore();
+  const other=env.authenticatedContext("other").firestore();
+  const parent=env.authenticatedContext("parent").firestore();
+  for(const db of [learner,other,parent]){
+   await assertFails(getDoc(doc(db,"homeschoolProfiles/learner")));
+   await assertFails(getDoc(doc(db,"homeschoolProfiles/learner/sessions/session1")));
+  }
+ });
+ it("denies client-side falsification of guardian reviews",async()=>{
+  const learner=env.authenticatedContext("learner").firestore();
+  const parent=env.authenticatedContext("parent").firestore();
+  await assertFails(setDoc(doc(learner,"homeschoolProfiles/learner"),{plan:{pathway:"kenya-cbe"}}));
+  await assertFails(setDoc(doc(learner,"homeschoolProfiles/learner/sessions/session1"),{reviewStatus:"guardian_acknowledged"}));
+  await assertFails(setDoc(doc(parent,"homeschoolProfiles/learner/sessions/session1"),{reviewStatus:"guardian_acknowledged"}));
+ });
+});
