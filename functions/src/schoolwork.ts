@@ -1,3 +1,4 @@
+import {getApps,initializeApp} from "firebase-admin/app";
 import {getFirestore,FieldValue} from "firebase-admin/firestore";
 import {onCall,HttpsError} from "firebase-functions/v2/https";
 import {defineSecret} from "firebase-functions/params";
@@ -9,6 +10,7 @@ import {rateLimit} from "./guard.js";
 const WORKSPACE_API_KEY=defineSecret("TEKNTANDAO_WORKSPACE_API_KEY");
 const WORKSPACE_REFRESH_TOKEN=defineSecret("TEKNTANDAO_FUNZI_SERVICE_REFRESH_TOKEN");
 const WORKSPACE_FEED_URL=defineSecret("TEKNTANDAO_FUNZI_SCHOOL_FEED_URL");
+if(!getApps().length)initializeApp();
 const db=getFirestore();
 const orgSchema=z.string().regex(/^[a-zA-Z0-9_-]{2,128}$/);
 type FeedType="lessons"|"assignments"|"announcements";
