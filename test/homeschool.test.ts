@@ -4,13 +4,14 @@ import {studySchedule,curriculumBridge,projectsForSubject,progressMetrics} from 
 const plan:LearnerPlan={pathway:"kenya-cbe",stage:"Primary",weeklyHours:12.5,language:"English",kenyaContext:true,subjects:["Mathematics","English","Integrated Science"]};
 describe("Home education curriculum, scheduling and evidence",()=>{
  it("lists Kenyan, Chinese, American and international pathways",()=>{
-  for(const id of ["kenya-cbe","china-national","us-common-core","us-ngss","us-ap","cambridge","ib","pearson-edexcel"])expect(pathways.some(p=>p.id===id)).toBe(true);
+  for(const id of ["kenya-cbe","china-national","us-common-core","us-ngss","us-ap","cambridge","ib","pearson-edexcel","india-cbse","singapore-moe","south-africa-caps","australian-curriculum","canada-ontario","new-zealand","france-national"])expect(pathways.some(p=>p.id===id)).toBe(true);
  });
  it("accepts valid plan and rejects invalid stages and subjects",()=>{
   expect(validatePlan(plan)).toEqual(plan);
   expect(()=>validatePlan({...plan,stage:"Non-existent Stage"})).toThrow();
   expect(()=>validatePlan({...plan,subjects:["Unknown subject"]})).toThrow();
   expect(()=>validatePlan({...plan,weeklyHours:61})).toThrow();
+  expect(()=>validatePlan({...plan,subjects:["Mathematics","Mathematics"]})).toThrow();
  });
  it("creates a complete five-day plan without allocating phantom minutes",()=>{
   const blocks=studySchedule(plan,40);
