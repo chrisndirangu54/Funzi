@@ -48,3 +48,5 @@ export const adminSetUserRole=onCall({enforceAppCheck:true},async r=>{requireApp
 
 export {applyAsTutor,applyAsSchoolPartner,requestTutoringEligibility,reviewTutoringProvider,reviewTutoringEligibility,getMyTutoringAccount,submitTutoringPackage,reviewTutoringPackage,listTutoringPackages,getMyTutoringDashboard,requestTutoringBooking,respondTutoringBooking,postTutoringMessage,listTutoringMessages,listTutoringModeration} from "./tutoring.js";
 export {syncLinkedSchoolwork,getMySchoolwork} from "./schoolwork.js";
+
+export {saveHomeLearningPlan,getMyHomeLearningDashboard,recordHomeLearningSession,getHomeLearningFamilyDashboard,reviewHomeLearningSession} from "./homeschool.js";
